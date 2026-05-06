@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Understanding the Structure of the Universe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:ital,wght@0,300;0,400;0,600;1,300&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --deep: #020408;
+    --nebula: #0a0f1e;
+    --glow: #00d4ff;
+    --glow2: #00aaff;
+    --amber: #ffb347;
+    --magenta: #ff2d78;
+    --green: #00ff9d;
+    --purple: #aa44ff;
+    --text: #c8dff0;
+    --muted: #4a6a85;
+    --card: rgba(6,14,28,0.88);
+    --border: rgba(0,212,255,0.18);
+    --border-hover: rgba(0,212,255,0.5);
+    --panel-w: 330px;
+    --primary-grad: linear-gradient(135deg, #00d4ff 0%, #00aaff 100%);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body {
+    width:100%; height:100%;
+    background: var(--deep);
+    color: var(--text);
+    font-family: 'Exo 2', sans-serif;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  canvas { display:block; position:fixed; inset:0; z-index:0; }
+
+  /* ── LOADING SCREEN ── */
+  #loading {
+    position: fixed; inset:0; background: var(--deep);
+    z-index: 2000; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:28px;
+    transition: opacity 1s ease;
+  }
+  #loading.hidden { opacity:0; pointer-events:none; }
+
+  .load-logo {
+    font-family: 'Orbitron', monospace;
+    font-size: 36px; font-weight:900; letter-spacing:8px;
+    background: var(--primary-grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: none;
+    animation: pulseLogo 2s ease infinite;
+  }
+
+  @keyframes pulseLogo {
+    0%,100% { filter: drop-shadow(0 0 40px rgba(0,212,255,0.6)); }
+    50%      { filter: drop-shadow(0 0 60px rgba(0,212,255,0.9)); }
+  }
+
+  .load-sub { font-size:11px; color:var(--muted); letter-spacing:4px; text-transform:uppercase; }
+  .load-progress { width:280px; display:flex; flex-direction:column; gap:8px; }
+  .load-bar-wrap { width:100%; height:2px; background:rgba(255,255,255,0.06); border-radius:2px; overflow:hidden; }
+  .load-bar { height:100%; width:0%; background:var(--primary-grad); border-radius:2px; transition: width 0.3s ease; }
+  .load-step { font-size:9px; color:var(--muted); letter-spacing:2px; text-align:center; }
+
+  /* ── TOPBAR ── */
+  #topbar {
+    position:fixed; top:0; left:0; right:0; z-index:200;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 20px;
+    background: linear-gradient(180deg, rgba(2,4,8,0.98) 0%, transparent 100%);
+    border-bottom: 0.5px solid var(--border);
+  }
+
+  #logo {
+    font-family:'Orbitron',monospace; font-size:18px; font-weight:900;
+    letter-spacing:4px; background:var(--primary-grad);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    cursor:pointer; flex-shrink:0;
+  }
+
+  #nav-pills { display:flex; gap:5px; flex-wrap:wrap; justify-content:center; }
+  .nav-pill {
+    padding:5px 14px; border-radius:20px;
+    border:0.5px solid var(--border); background:rgba(0,212,255,0.04);
+    color:var(--text); font-family:'Exo 2',sans-serif; font-size:11px;
+    letter-spacing:1px; cursor:pointer; transition:all 0.25s; text-transform:uppercase;
+    white-space:nowrap;
+  }
+  .nav-pill:hover { background:rgba(0,212,255,0.12); border-color:var(--glow); color:var(--glow); box-shadow:0 0 10px rgba(0,212,255,0.2); }
+  .nav-pill.active { background:rgba(0,212,255,0.14); border-color:var(--glow); color:var(--glow); box-shadow:0 0 12px rgba(0,212,255,0.25); }
+
+  #top-right { display:flex; align-items:center; gap:8px; }
+  .icon-btn {
+    width:32px; height:32px; border-radius:50%;
+    border:0.5px solid var(--border); background:transparent;
+    color:var(--muted); font-size:14px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:all 0.2s;
+  }
+  .icon-btn:hover { border-color:var(--glow); color:var(--glow); background:rgba(0,212,255,0.08); }
+  .icon-btn.active { color:var(--glow); border-color:var(--glow); background:rgba(0,212,255,0.1); }
+
+  /* ── SEARCH ── */
+  #search-wrap {
+    position:fixed; top:62px; left:50%; transform:translateX(-50%);
+    z-index:300; width:360px;
+    opacity:0; pointer-events:none; transition:opacity 0.3s, transform 0.3s;
+  }
+  #search-wrap.open { opacity:1; pointer-events:all; }
+  #search-box {
+    width:100%; padding:10px 16px 10px 40px;
+    background:var(--card); border:0.5px solid var(--glow);
+    border-radius:24px; color:var(--text); font-family:'Exo 2',sans-serif; font-size:13px;
+    outline:none; backdrop-filter:blur(16px);
+    box-shadow:0 0 20px rgba(0,212,255,0.15);
+  }
+  #search-icon-inner { position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--glow); font-size:14px; }
+  #search-results { margin-top:6px; background:var(--card); border:0.5px solid var(--border); border-radius:12px; overflow:hidden; backdrop-filter:blur(16px); display:none; }
+  #search-results.show { display:block; }
+  .search-item { padding:10px 16px; cursor:pointer; font-size:12px; letter-spacing:0.5px; border-bottom:0.5px solid var(--border); transition:background 0.15s; display:flex; align-items:center; gap:10px; }
+  .search-item:last-child { border-bottom:none; }
+  .search-item:hover { background:rgba(0,212,255,0.08); color:var(--glow); }
+  .search-item .s-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .search-item .s-cat { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-left:auto; }
+
+  /* ── SCALE LABEL ── */
+  #scale-mode {
+    position:fixed; top:62px; left:50%; transform:translateX(-50%);
+    z-index:100; font-family:'Orbitron',monospace; font-size:10px; letter-spacing:4px;
+    color:var(--amber); text-align:center; pointer-events:none;
+    opacity:0; transition:opacity 0.5s;
+  }
+  #scale-mode.show { opacity:1; }
+
+  /* ── OBJECT LIST ── */
+  #object-list {
+    position:fixed; top:68px; left:16px; z-index:100;
+    display:flex; flex-direction:column; gap:5px;
+    max-height:calc(100vh - 200px); overflow-y:auto;
+    padding-right:4px;
+  }
+  #object-list::-webkit-scrollbar { width:3px; }
+  #object-list::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+  .obj-btn {
+    display:flex; align-items:center; gap:10px; padding:8px 14px;
+    background:var(--card); border:0.5px solid var(--border);
+    border-radius:28px; backdrop-filter:blur(10px);
+    cursor:pointer; transition:all 0.25s; width:176px;
+    position:relative; overflow:hidden;
+  }
+  .obj-btn:hover { border-color:var(--glow); background:rgba(0,212,255,0.07); transform:translateX(3px); }
+  .obj-btn.selected { border-color:var(--magenta); background:rgba(255,45,120,0.07); }
+  .obj-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; box-shadow:0 0 6px currentColor; }
+  .obj-name { font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--text); }
+
+  /* ── HUD ── */
+  #hud {
+    position:fixed; bottom:180px; right:16px; z-index:100;
+    font-family:'Space Mono',monospace; font-size:9px; color:var(--muted);
+    letter-spacing:1px; text-align:right; line-height:2.2;
+    background:rgba(6,14,28,0.6); border:0.5px solid var(--border);
+    border-radius:8px; padding:12px 16px; backdrop-filter:blur(10px);
+  }
+  .hud-value { color:var(--glow); margin-left:6px; }
+  #hud-fps { color:var(--green); }
+
+  /* ── CONTROLS ── */
+  #controls {
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+    z-index:100; display:flex; gap:6px;
+    background:var(--card); border:0.5px solid var(--border);
+    border-radius:50px; padding:7px 14px; backdrop-filter:blur(12px);
+    box-shadow:0 4px 24px rgba(0,0,0,0.4);
+    flex-wrap:wrap; justify-content:center;
+    max-width:95vw;
+  }
+
+  .ctrl-btn {
+    width:38px; height:38px; border-radius:50%;
+    border:0.5px solid var(--border); background:transparent;
+    color:var(--text); font-size:15px; cursor:pointer;
+    transition:all 0.2s; display:flex; align-items:center; justify-content:center;
+  }
+  .ctrl-btn:hover { background:rgba(0,212,255,0.1); border-color:var(--glow); color:var(--glow); transform:scale(1.1); }
+  .ctrl-btn.active { color:var(--glow); border-color:var(--glow); background:rgba(0,212,255,0.1); }
+
+  #speed-wrap { display:flex; align-items:center; gap:6px; padding:0 4px; border-left:0.5px solid var(--border); }
+  #speed-label { font-size:9px; color:var(--muted); letter-spacing:1px; white-space:nowrap; }
+  #speed-slider {
+    -webkit-appearance:none; width:60px; height:2px;
+    background:var(--border); border-radius:2px; outline:none; cursor:pointer;
+  }
+  #speed-slider::-webkit-slider-thumb {
+    -webkit-appearance:none; width:10px; height:10px; border-radius:50%;
+    background:var(--glow); cursor:pointer; box-shadow:0 0 6px rgba(0,212,255,0.6);
+  }
+
+  /* ── INFO PANEL ── */
+  #info-panel {
+    position:fixed; top:60px; right:16px; width:var(--panel-w); z-index:100;
+    background:var(--card); border:0.5px solid var(--border);
+    border-radius:14px; backdrop-filter:blur(20px);
+    overflow:hidden; transform:translateX(calc(var(--panel-w) + 40px));
+    transition:transform 0.45s cubic-bezier(0.25,0.46,0.45,0.94);
+    box-shadow:0 8px 40px rgba(0,0,0,0.5);
+    max-height:80vh; display:flex; flex-direction:column;
+  }
+  #info-panel.open { transform:translateX(0); }
+
+  #panel-header {
+    padding:16px 18px 14px; border-bottom:0.5px solid var(--border);
+    display:flex; justify-content:space-between; align-items:flex-start;
+    background:linear-gradient(135deg, rgba(0,212,255,0.04), transparent);
+  }
+  #panel-icon { font-size:22px; margin-bottom:6px; }
+  #panel-title { font-family:'Orbitron',monospace; font-size:15px; font-weight:700; color:var(--glow); letter-spacing:2px; }
+  #panel-subtitle { font-size:10px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; margin-top:3px; }
+  #close-panel { background:none; border:none; color:var(--muted); font-size:16px; cursor:pointer; padding:2px 4px; line-height:1; transition:color 0.2s; }
+  #close-panel:hover { color:var(--glow); }
+
+  #panel-tabs { display:flex; border-bottom:0.5px solid var(--border); flex-shrink:0; }
+  .p-tab { flex:1; padding:9px; font-size:9px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); cursor:pointer; text-align:center; transition:all 0.2s; border-bottom:2px solid transparent; font-family:'Orbitron',monospace; }
+  .p-tab:hover { color:var(--text); }
+  .p-tab.active { color:var(--glow); border-bottom-color:var(--glow); }
+
+  #panel-body { padding:16px 18px; overflow-y:auto; flex:1; }
+  #panel-body::-webkit-scrollbar { width:3px; }
+  #panel-body::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+  .stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-bottom:16px; }
+  .stat-card { background:rgba(0,212,255,0.04); border:0.5px solid var(--border); border-radius:8px; padding:10px 12px; transition:border-color 0.2s; }
+  .stat-card:hover { border-color:rgba(0,212,255,0.35); }
+  .stat-label { font-size:8px; color:var(--muted); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:4px; }
+  .stat-value { font-family:'Orbitron',monospace; font-size:12px; font-weight:700; color:var(--glow); }
+
+  .info-section { margin-bottom:14px; }
+  .info-section h3 { font-family:'Orbitron',monospace; font-size:9px; letter-spacing:2px; color:var(--amber); text-transform:uppercase; margin-bottom:8px; padding-bottom:5px; border-bottom:0.5px solid rgba(255,179,71,0.2); }
+  .info-section p { font-size:12px; line-height:1.75; color:var(--text); opacity:0.85; }
+
+  .fact-list { list-style:none; display:flex; flex-direction:column; gap:5px; }
+  .fact-list li { font-size:11px; color:var(--text); opacity:0.8; padding-left:14px; position:relative; line-height:1.55; }
+  .fact-list li::before { content:'›'; position:absolute; left:0; color:var(--glow); }
+
+  .fun-fact { background:rgba(255,179,71,0.05); border:0.5px solid rgba(255,179,71,0.2); border-radius:8px; padding:12px 14px; margin-bottom:10px; }
+  .fun-fact .ff-num { font-family:'Orbitron',monospace; font-size:20px; color:var(--amber); opacity:0.4; font-weight:900; margin-bottom:4px; }
+  .fun-fact p { font-size:11px; line-height:1.6; color:var(--text); opacity:0.85; }
+
+  /* ── LEGEND ── */
+  #legend {
+    position:fixed; bottom:76px; left:16px; z-index:100;
+    background:var(--card); border:0.5px solid var(--border);
+    border-radius:8px; padding:10px 13px; backdrop-filter:blur(10px);
+  }
+  .legend-row { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+  .legend-row:last-child { margin-bottom:0; }
+  .legend-dot { width:8px; height:8px; border-radius:50%; }
+  .legend-text { font-size:9px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); }
+
+  /* ── TOOLTIP ── */
+  #tooltip {
+    position:fixed; z-index:500;
+    background:rgba(2,4,8,0.92); border:0.5px solid var(--glow);
+    border-radius:6px; padding:5px 12px;
+    font-size:10px; letter-spacing:1px; color:var(--glow);
+    font-family:'Orbitron',monospace; pointer-events:none;
+    opacity:0; transition:opacity 0.15s; text-transform:uppercase;
+    box-shadow:0 0 12px rgba(0,212,255,0.2);
+  }
+
+  /* ── KEYBOARD SHORTCUTS ── */
+  #shortcuts-overlay {
+    position:fixed; inset:0; z-index:800;
+    background:rgba(2,4,8,0.88); backdrop-filter:blur(8px);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity 0.3s;
+    overflow-y:auto;
+  }
+  #shortcuts-overlay.open { opacity:1; pointer-events:all; }
+  .shortcuts-box {
+    background:var(--card); border:0.5px solid var(--border); border-radius:16px;
+    padding:28px 36px; max-width:600px;
+    box-shadow:0 12px 60px rgba(0,0,0,0.6);
+    margin:20px;
+  }
+  .shortcuts-box h2 { font-family:'Orbitron',monospace; font-size:12px; letter-spacing:3px; color:var(--glow); margin-bottom:20px; text-align:center; }
+  .shortcuts-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .sc-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  .sc-key { background:rgba(0,212,255,0.08); border:0.5px solid var(--border); border-radius:5px; padding:3px 10px; font-family:'Orbitron',monospace; font-size:10px; color:var(--glow); letter-spacing:1px; min-width:60px; text-align:center; }
+  .sc-desc { font-size:11px; color:var(--text); opacity:0.7; letter-spacing:0.5px; }
+
+  /* ── SAVE/LOAD DATA MODAL ── */
+  #data-modal {
+    position:fixed; inset:0; z-index:900;
+    background:rgba(2,4,8,0.88); backdrop-filter:blur(8px);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity 0.3s;
+  }
+  #data-modal.open { opacity:1; pointer-events:all; }
+  .data-box {
+    background:var(--card); border:0.5px solid var(--glow);
+    border-radius:16px; padding:28px 36px;
+    box-shadow:0 12px 60px rgba(0,0,0,0.6);
+    max-width:500px;
+  }
+  .data-box h2 { font-family:'Orbitron',monospace; font-size:12px; letter-spacing:3px; color:var(--glow); margin-bottom:20px; }
+  .data-row { margin-bottom:14px; display:flex; gap:8px; }
+  .data-btn {
+    flex:1; padding:10px 20px;
+    background:linear-gradient(135deg, rgba(0,212,255,0.1), rgba(0,212,255,0.05));
+    border:0.5px solid var(--glow); border-radius:8px;
+    color:var(--glow); font-family:'Exo 2',sans-serif; font-size:12px;
+    letter-spacing:1px; cursor:pointer; transition:all 0.2s;
+  }
+  .data-btn:hover { background:linear-gradient(135deg, rgba(0,212,255,0.15), rgba(0,212,255,0.1)); transform:translateY(-2px); }
+  .data-text { font-size:11px; color:var(--text); opacity:0.7; line-height:1.6; }
+
+  /* ── MULTIPLAYER INDICATOR ── */
+  #multiplayer-status {
+    position:fixed; top:62px; right:160px; z-index:100;
+    background:var(--card); border:0.5px solid var(--border);
+    border-radius:20px; padding:6px 14px; font-size:10px;
+    color:var(--muted); letter-spacing:1px; display:none;
+  }
+  #multiplayer-status.online { display:block; }
+  #multiplayer-status.online::before { content:'● '; color:var(--green); }
+
+  /* ── AR MODE OVERLAY ── */
+  #ar-overlay {
+    position:fixed; inset:0; z-index:150;
+    background:rgba(0,0,0,0.3); backdrop-filter:blur(8px);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity 0.3s;
+    border:2px dashed var(--glow);
+  }
+  #ar-overlay.active { opacity:1; pointer-events:all; }
+  .ar-info {
+    background:var(--card); border:0.5px solid var(--glow);
+    border-radius:12px; padding:20px; text-align:center;
+    font-size:12px; color:var(--text);
+  }
+
+  /* ── NOTIFICATION ── */
+  #notif {
+    position:fixed; bottom:90px; left:50%; transform:translateX(-50%);
+    z-index:400; background:var(--card); border:0.5px solid var(--glow);
+    border-radius:20px; padding:7px 20px; font-size:11px; color:var(--glow);
+    font-family:'Orbitron',monospace; letter-spacing:1px;
+    opacity:0; pointer-events:none; transition:opacity 0.3s, transform 0.3s;
+    box-shadow:0 0 20px rgba(0,212,255,0.2);
+  }
+  #notif.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* ── RESPONSIVE ── */
+  @media(max-width:768px) {
+    #object-list { display:none; }
+    #info-panel { width:calc(100vw - 32px); --panel-w:calc(100vw - 32px); right:16px; }
+    #legend { display:none; }
+    #hud { display:none; }
+    #speed-wrap { display:none; }
+    #nav-pills .nav-pill { font-size:9px; padding:4px 10px; }
+    .shortcuts-grid { grid-template-columns:1fr; }
+  }
+
+  /* ANIMATIONS */
+  @keyframes pulse { 0%,100% { opacity:0.5; } 50% { opacity:1; } }
+  @keyframes slide-in { from { transform:translateX(-20px); opacity:0; } to { transform:translateX(0); opacity:1; } }
+</style>
+</head>
+<body>
+
+<!-- Flash for screenshot -->
+<div id="flash"></div>
+<div id="notif"></div>
+
+<!-- Loading -->
+<div id="loading">
+  <div class="load-logo">COSMOS<span style="color:var(--magenta)">VAULT</span> PRO</div>
+  <div class="load-sub">Universe v2.0 — Enhanced Edition</div>
+  <div class="load-progress">
+    <div class="load-bar-wrap"><div class="load-bar" id="load-bar"></div></div>
+    <div class="load-step" id="load-step">Initializing quantum processors…</div>
+  </div>
+</div>
+
+<!-- Canvas -->
+<canvas id="c"></canvas>
+
+<!-- AR Overlay -->
+<div id="ar-overlay">
+  <div class="ar-info">
+    <div style="font-size:16px;margin-bottom:10px">📱 AR Mode Active</div>
+    <div>Point your device at the sky to see planets</div>
+    <div style="font-size:10px;color:var(--muted);margin-top:10px">Press ESC to exit</div>
+  </div>
+</div>
+
+<!-- Topbar -->
+<div id="topbar">
+  <div id="logo" onclick="setView('galaxy')">COSMOS<span style="color:var(--magenta)">VAULT</span></div>
+  <div id="nav-pills">
+    <button class="nav-pill active" data-view="galaxy"    onclick="setView('galaxy')">Galaxy</button>
+    <button class="nav-pill"        data-view="solar"     onclick="setView('solar')">Solar System</button>
+    <button class="nav-pill"        data-view="moons"     onclick="setView('moons')">Moons</button>
+    <button class="nav-pill"        data-view="universe"  onclick="setView('universe')">Universe</button>
+    <button class="nav-pill"        data-view="blackhole" onclick="setView('blackhole')">Black Holes</button>
+    <button class="nav-pill"        data-view="nebula"    onclick="setView('nebula')">Nebulae</button>
+  </div>
+  <div id="top-right">
+    <div id="multiplayer-status" title="Live multiplayer session">MULTIPLAYER</div>
+    <button class="icon-btn" title="Search (S)" onclick="toggleSearch()">🔍</button>
+    <button class="icon-btn" title="Save/Load (D)" onclick="toggleDataModal()">💾</button>
+    <button class="icon-btn" title="AR Mode (A)" onclick="toggleARMode()">📱</button>
+    <button class="icon-btn" title="Keyboard shortcuts (?)" onclick="toggleShortcuts()">⌨</button>
+  </div>
+</div>
+
+<!-- Search -->
+<div id="search-wrap">
+  <div style="position:relative">
+    <span id="search-icon-inner">🔍</span>
+    <input id="search-box" type="text" placeholder="Search planets, stars, phenomena…" oninput="doSearch(this.value)" onkeydown="searchKeydown(event)">
+  </div>
+  <div id="search-results"></div>
+</div>
+
+<!-- Scale label -->
+<div id="scale-mode"></div>
+
+<!-- Object list -->
+<div id="object-list"></div>
+
+<!-- HUD -->
+<div id="hud">
+  <div>ZOOM <span class="hud-value" id="hud-zoom">1.0×</span></div>
+  <div>VIEW <span class="hud-value" id="hud-view">GALAXY</span></div>
+  <div>OBJ  <span class="hud-value" id="hud-obj">—</span></div>
+  <div>TIME <span class="hud-value" id="hud-time">00:00</span></div>
+  <div>FPS  <span class="hud-value" id="hud-fps">—</span></div>
+</div>
+
+<!-- Legend -->
+<div id="legend">
+  <div class="legend-row"><div class="legend-dot" style="background:#FFD700;box-shadow:0 0 5px #FFD700"></div><span class="legend-text">Star</span></div>
+  <div class="legend-row"><div class="legend-dot" style="background:#4488FF;box-shadow:0 0 5px #4488FF"></div><span class="legend-text">Planet</span></div>
+  <div class="legend-row"><div class="legend-dot" style="background:#AAAAAA;box-shadow:0 0 5px #AAAAAA"></div><span class="legend-text">Moon</span></div>
+  <div class="legend-row"><div class="legend-dot" style="background:#AA44FF;box-shadow:0 0 5px #AA44FF"></div><span class="legend-text">Nebula</span></div>
+</div>
+
+<!-- Info Panel -->
+<div id="info-panel">
+  <div id="panel-header">
+    <div>
+      <div id="panel-icon">🌌</div>
+      <div id="panel-title">OBJECT</div>
+      <div id="panel-subtitle">Awaiting selection</div>
+    </div>
+    <button id="close-panel" onclick="closePanel()">✕</button>
+  </div>
+  <div id="panel-tabs">
+    <div class="p-tab active" onclick="switchTab('info')">Info</div>
+    <div class="p-tab" onclick="switchTab('stats')">Stats</div>
+    <div class="p-tab" onclick="switchTab('facts')">Facts</div>
+  </div>
+  <div id="panel-body"></div>
+</div>
+
+<!-- Controls -->
+<div id="controls">
+  <button class="ctrl-btn" title="Zoom In (+)" onclick="zoomIn()">＋</button>
+  <button class="ctrl-btn" title="Zoom Out (−)" onclick="zoomOut()">－</button>
+  <button class="ctrl-btn" title="Reset View (R)" onclick="resetView()">⊙</button>
+  <button class="ctrl-btn active" title="Auto Rotate (Space)" id="rotate-btn" onclick="toggleRotate()">↻</button>
+  <button class="ctrl-btn" title="Toggle Info (I)" onclick="togglePanel()">ℹ</button>
+  <button class="ctrl-btn" title="Screenshot (P)" onclick="takeScreenshot()">📷</button>
+  <div id="speed-wrap">
+    <span id="speed-label">SPEED</span>
+    <input id="speed-slider" type="range" min="0.1" max="5" step="0.1" value="1" oninput="setSpeed(this.value)">
+  </div>
+</div>
+
+<!-- Tooltip -->
+<div id="tooltip"></div>
+
+<!-- Shortcuts Overlay -->
+<div id="shortcuts-overlay" onclick="toggleShortcuts()">
+  <div class="shortcuts-box" onclick="event.stopPropagation()">
+    <h2>⌨ KEYBOARD SHORTCUTS</h2>
+    <div class="shortcuts-grid">
+      <div>
+        <div class="sc-row"><span class="sc-key">1-6</span><span class="sc-desc">Switch views</span></div>
+        <div class="sc-row"><span class="sc-key">SPACE</span><span class="sc-desc">Toggle rotation</span></div>
+        <div class="sc-row"><span class="sc-key">+/−</span><span class="sc-desc">Zoom</span></div>
+        <div class="sc-row"><span class="sc-key">R</span><span class="sc-desc">Reset view</span></div>
+      </div>
+      <div>
+        <div class="sc-row"><span class="sc-key">I</span><span class="sc-desc">Toggle info</span></div>
+        <div class="sc-row"><span class="sc-key">S</span><span class="sc-desc">Search</span></div>
+        <div class="sc-row"><span class="sc-key">P</span><span class="sc-desc">Screenshot</span></div>
+        <div class="sc-row"><span class="sc-key">D</span><span class="sc-desc">Save/Load</span></div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:16px;padding-top:16px;border-top:0.5px solid var(--border)">
+      <div style="font-size:10px;color:var(--muted);letter-spacing:1px">A • Toggle AR | ? • Show Help | ESC • Close All</div>
+    </div>
+  </div>
+</div>
+
+<!-- Data Modal -->
+<div id="data-modal">
+  <div class="data-box" onclick="event.stopPropagation()">
+    <h2>💾 SESSION MANAGER</h2>
+    <div class="data-text">Save your current view, zoom, and position</div>
+    <div class="data-row">
+      <button class="data-btn" onclick="saveSession()">💾 Save Session</button>
+      <button class="data-btn" onclick="loadSession()">📂 Load Session</button>
+    </div>
+    <div class="data-text" style="margin-top:20px;border-top:0.5px solid var(--border);padding-top:15px">
+      <strong>Multiplayer Preview:</strong> Live session connects to server (currently: offline demo)
+    </div>
+    <div class="data-row">
+      <button class="data-btn" onclick="toggleMultiplayer()" id="mp-btn" style="border-color:var(--green);color:var(--green)">🟢 ONLINE</button>
+      <button class="data-btn" onclick="toggleDataModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════════
+// ENHANCED DATA WITH DWARF PLANETS, MOONS, AND MORE
+// ═══════════════════════════════════════════════════════════════
+const ICONS = { galaxy:'🌌', solar:'☀️', universe:'🔭', blackhole:'⚫', nebula:'🌈', moons:'🌙' };
+
+const PLANETS = [
+  { name:'Mercury', color:0x9E9E9E, size:0.18, dist:3.5,  speed:0.04,  dot:'#9E9E9E', emoji:'☿', moons:0 },
+  { name:'Venus',   color:0xE8C27C, size:0.3,  dist:5.0,  speed:0.025, dot:'#E8C27C', emoji:'♀', moons:0 },
+  { name:'Earth',   color:0x4488FF, size:0.32, dist:7.0,  speed:0.018, dot:'#4488FF', emoji:'🌍', moons:1 },
+  { name:'Mars',    color:0xCC4422, size:0.22, dist:9.0,  speed:0.012, dot:'#CC4422', emoji:'♂', moons:2 },
+  { name:'Jupiter', color:0xC88B4C, size:0.75, dist:13.0, speed:0.005, dot:'#C88B4C', emoji:'♃', moons:95 },
+  { name:'Saturn',  color:0xDDCC88, size:0.65, dist:17.0, speed:0.003, dot:'#DDCC88', emoji:'♄', moons:145 },
+  { name:'Uranus',  color:0x66CCDD, size:0.5,  dist:21.0, speed:0.002, dot:'#66CCDD', emoji:'♅', moons:28 },
+  { name:'Neptune', color:0x2244FF, size:0.48, dist:25.0, speed:0.001, dot:'#2244FF', emoji:'♆', moons:16 }
+];
+
+const MOONS_DATA = [
+  { name:'Moon', parent:'Earth', color:0xAAAAAA, size:0.08, orbit:0.55, emoji:'🌙', facts:['Earth\'s only natural satellite','4.5 billion years old','Causes ocean tides','Slowly drifting away at 3.8 cm/year'] },
+  { name:'Phobos', parent:'Mars', color:0x8B7355, size:0.04, orbit:0.25, emoji:'🪨', facts:['Larger of Mars\' two moons','Potato-shaped','Orbits Mars every 7 hours','Will eventually crash into Mars in ~50 million years'] },
+  { name:'Deimos', parent:'Mars', color:0x9B8B7B, size:0.03, orbit:0.4, emoji:'🪨', facts:['Smaller Martian moon','Extremely small','Orbits Mars every 30 hours','Named after Greek god of panic'] },
+  { name:'Io', parent:'Jupiter', color:0xFFDD44, size:0.12, orbit:0.8, emoji:'🌋', facts:['Most volcanically active body','Over 500 volcanoes','Io and Europa subsystem','Named after priestess in Greek mythology'] },
+  { name:'Europa', parent:'Jupiter', color:0xDDDDCC, size:0.11, orbit:1.2, emoji:'❄️', facts:['Icy moon with subsurface ocean','Potential for extraterrestrial life','Cracks suggest tidal heating','NASA plans future missions'] },
+  { name:'Ganymede', parent:'Jupiter', color:0xBBBBBB, size:0.16, orbit:1.6, emoji:'🌍', facts:['Largest moon in Solar System','Bigger than Mercury','Has magnetic field','Ancient impact basins'] },
+  { name:'Callisto', parent:'Jupiter', color:0x555555, size:0.15, orbit:2.0, emoji:'🪨', facts:['Heavily cratered surface','Minimal geological activity','Lacks magnetic field','Ancient, pristine surface'] },
+  { name:'Titan', parent:'Saturn', color:0xEEBB88, size:0.2, orbit:1.8, emoji:'🌫️', facts:['Second-largest moon','Thick nitrogen atmosphere','Liquid methane lakes','Possible microbial life'] },
+  { name:'Enceladus', parent:'Saturn', color:0xFFFFFF, size:0.08, orbit:1.1, emoji:'❄️', facts:['Icy geysers of water','Subsurface ocean','Candidate for life','NASA\'s CASSINI visited multiple times'] },
+  { name:'Triton', parent:'Neptune', color:0xDDEEFF, size:0.09, orbit:1.0, emoji:'❄️', facts:['Orbits backwards (retrograde)','Likely captured Kuiper Belt object','Nitrogen geysers','Coldest planetary body'] }
+];
+
+const DWARF_PLANETS = [
+  { name:'Pluto', color:0x8B7D6B, size:0.06, dist:40, emoji:'🪨', facts:['No longer classified as planet (2006)','Has 5 moons','Heart-shaped region on surface','New Horizons flew by in 2015'] },
+  { name:'Eris', color:0x999999, size:0.07, dist:44, emoji:'❄️', facts:['More massive than Pluto','Farthest dwarf planet','Discovered in 2005','Caused Pluto\'s reclassification'] },
+  { name:'Haumea', color:0x999988, size:0.05, dist:38, emoji:'🏉', facts:['Egg-shaped due to rapid rotation','Has ring system','Discovered in 2004','Named after Hawaiian goddess'] },
+  { name:'Makemake', color:0x776655, size:0.05, dist:42, emoji:'🪨', facts:['Second-brightest Kuiper Belt object','Has small moon','Possible thin atmosphere','Named after Rapa Nui creator god'] }
+];
+
+const DATA = {
+  galaxy: {
+    title:'MILKY WAY', subtitle:'Barred Spiral Galaxy', icon:'🌌',
+    stats:[
+      {label:'Diameter',value:'105,700 LY'},{label:'Stars',value:'~300 Billion'},
+      {label:'Age',value:'13.6 Billion Yr'},{label:'Type',value:'SBbc'}
+    ],
+    overview:'The Milky Way is a barred spiral galaxy containing our Solar System. Home to billions of stars, and centered on a supermassive black hole.',
+    sections:[
+      { title:'Structure', facts:['Central bulge ~10,000 LY','Four major spiral arms','Dark matter halo extends 800,000 LY','Barred structure ~27,000 LY across'] },
+      { title:'Our Location', facts:['Solar System 26,000 LY from center','On the Orion Arm','Orbits center at ~220 km/s','One orbital period: ~225 million years'] }
+    ],
+    funFacts:['The Milky Way is so large that light from its edge predates Earth itself.','If shrunk to the size of the US, Earth would fit inside a coffee cup.','We can only see ~5,000 stars with naked eye despite 300 billion in the galaxy.','Sagittarius A* black hole has a mass of 4 million Suns.']
+  },
+  solar: {
+    title:'SOLAR SYSTEM', subtitle:'Our Cosmic Neighborhood', icon:'☀️',
+    stats:[
+      {label:'Age',value:'4.6 Billion Yr'},{label:'Planets',value:'8'},
+      {label:'Moons',value:'200+'},{label:'Diameter',value:'~2 Light-Years'}
+    ],
+    overview:'Formed from collapsing molecular cloud 4.6 billion years ago. Contains 8 planets, 200+ moons, and countless asteroids.',
+    sections:[
+      { title:'The Sun', facts:['Type G2V yellow dwarf','Diameter: 1.39 million km','Core temp: 15 million °C','Fuses 600 million tonnes H per second'] },
+      { title:'Rocky Planets', facts:['Mercury: Extreme temp swings','Venus: Hottest at 465°C','Earth: Only known life planet','Mars: Home to Olympus Mons'] }
+    ],
+    funFacts:['Jupiter could fit 1,300 Earths inside it.','Saturn is so light it would float on water.','A Martian day is almost identical to Earth\'s (24h 37m).','All planets could fit between Earth and Moon with room to spare.']
+  },
+  moons: {
+    title:'MOONS & SATELLITES', subtitle:'Orbital Companions', icon:'🌙',
+    stats:[
+      {label:'Total Moons',value:'200+'},{label:'Largest',value:'Ganymede'},
+      {label:'Most Active',value:'Io'},{label:'Icy Worlds',value:'Europa, Enceladus, Triton'}
+    ],
+    overview:'Over 200 moons orbit our Solar System\'s planets. From Earth\'s Moon to Jupiter\'s Ganymede, these worlds show incredible diversity.',
+    sections:[
+      { title:'Planetary Moons', facts:['Mercury & Venus: 0 moons','Earth: 1 moon','Mars: 2 small moons','Jupiter: 95+ moons','Saturn: 145+ moons'] },
+      { title:'Notable Moons', facts:['Ganymede: Largest in Solar System','Titan: Has atmosphere like Earth','Enceladus: Water geysers below ice','Triton: Retrograde orbit, coldest body'] }
+    ],
+    funFacts:['The Moon is slowly leaving Earth at 3.8 cm per year.','Io has more volcanoes than any other body in the Solar System.','Europa likely has more liquid water than all Earth\'s oceans.','Titan\'s atmosphere is thicker than Earth\'s.']
+  },
+  universe: {
+    title:'THE OBSERVABLE UNIVERSE', subtitle:'The Cosmos', icon:'🔭',
+    stats:[
+      {label:'Age',value:'13.8 Billion Yr'},{label:'Diameter',value:'93 Billion LY'},
+      {label:'Galaxies',value:'~2 Trillion'},{label:'Dark Energy',value:'68%'}
+    ],
+    overview:'The observable universe spans 93 billion light-years and contains 2 trillion galaxies. It began with the Big Bang and continues expanding.',
+    sections:[
+      { title:'Big Bang & Inflation', facts:['Singularity ~13.8 billion years ago','Cosmic inflation in 10⁻³² seconds','First atoms formed 380,000 years later','CMB radiation is afterglow'] },
+      { title:'Dark Universe', facts:['Ordinary matter: only 5%','Dark matter: 27% (invisible)','Dark energy: 68% (expansion)','Both remain mysterious'] }
+    ],
+    funFacts:['There are more stars in the universe than grains of sand on all Earth\'s beaches.','Light from universe\'s edge left before Earth existed.','We cannot see 95% of the universe (dark matter & energy).','Every galaxy is receding from every other galaxy.']
+  },
+  blackhole: {
+    title:'BLACK HOLES', subtitle:'Spacetime Singularities', icon:'⚫',
+    stats:[
+      {label:'Escape Vel.',value:'Speed of Light'},{label:'Sgr A* Mass',value:'4M Suns'},
+      {label:'M87* Mass',value:'6.5B Suns'},{label:'Hawking Radiation',value:'Causes Evaporation'}
+    ],
+    overview:'Black holes are regions where gravity is so extreme that nothing escapes. They form from collapsed stars or primordial fluctuations.',
+    sections:[
+      { title:'Anatomy', facts:['Singularity at center','Event horizon: point of no return','Photon sphere: light orbit','Ergosphere: space-dragging zone'] },
+      { title:'Types', facts:['Stellar: 5-100 solar masses','Intermediate: 100k solar masses','Supermassive: in galaxy centers','Primordial: hypothetical early universe'] }
+    ],
+    funFacts:['Outside observers see you slow down at event horizon.','M87* black hole could fit entire Solar System inside.','Merging black holes create gravitational waves.','Hawking radiation means black holes eventually evaporate.']
+  },
+  nebula: {
+    title:'NEBULAE', subtitle:'Star Nurseries', icon:'🌈',
+    stats:[
+      {label:'Orion Nebula',value:'1,344 LY Away'},{label:'Type',value:'Emission & Reflection'},
+      {label:'Composition',value:'Gas & Dust'},{label:'Temperature',value:'10K – 10,000K'}
+    ],
+    overview:'Nebulae are vast clouds of gas and dust where stars are born. They come in emission, reflection, dark, and planetary types.',
+    sections:[
+      { title:'Types', facts:['Emission: ionized glowing gas','Reflection: scattered starlight','Dark: dense blocking clouds','Planetary: expanding gas shells'] },
+      { title:'Star Formation', facts:['Gravity collapses dense pockets','Protostars heat to 10M °C','Fusion ignites, stars form','Ionized gas glows brilliantly'] }
+    ],
+    funFacts:['Orion Nebula has 700+ stars in various formation stages.','Pillars of Creation are 6,500 light-years away and 4-5 light-years tall.','Carina Nebula is birthing thousands of stars.','Nebulae contain atoms that become planets and life.']
+  }
+};
+
+// SEARCH INDEX
+const SEARCH_INDEX = [];
+Object.entries(DATA).forEach(([k,v]) => {
+  const colors = {galaxy:'#FFD700',solar:'#FFDD44',universe:'#4488FF',blackhole:'#FF2D78',nebula:'#AA44FF',moons:'#AAAAAA'};
+  SEARCH_INDEX.push({label:v.title,sub:v.subtitle,view:k,dot:colors[k]});
+});
+PLANETS.forEach(p => {
+  SEARCH_INDEX.push({label:p.name,sub:'Planet',view:'solar',planet:p.name,dot:p.dot});
+});
+MOONS_DATA.forEach(m => {
+  SEARCH_INDEX.push({label:m.name,sub:`Moon of ${m.parent}`,view:'moons',moon:m.name,dot:'#AAAAAA'});
+});
+DWARF_PLANETS.forEach(d => {
+  SEARCH_INDEX.push({label:d.name,sub:'Dwarf Planet',view:'solar',dwarf:d.name,dot:d.color});
+});
+
+// ═══════════════════════════════════════════════════════════════
+// THREE.JS SETUP
+// ═══════════════════════════════════════════════════════════════
+let scene, camera, renderer;
+let autoRotate = true;
+let currentView = 'galaxy';
+let objects = {};
+let mouse = new THREE.Vector2();
+let raycaster = new THREE.Raycaster();
+let clickables = [];
+let orbitAngles = {};
+let t = 0;
+let simSpeed = 1;
+let currentTab = 'info';
+let activeData = null;
+let isDragging = false, dragStart = {x:0,y:0};
+let fpsFrames = 0, fpsLast = performance.now();
+let sessionTime = 0;
+let arActive = false;
+let multiplayerOnline = false;
+
+function init() {
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 5000);
+  camera.position.set(0,20,60);
+  camera.lookAt(0,0,0);
+
+  renderer = new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true,alpha:true,preserveDrawingBuffer:true});
+  renderer.setSize(window.innerWidth,window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setClearColor(0x000000,1);
+
+  scene.add(new THREE.AmbientLight(0x111133,2));
+
+  setLoadStep('Generating starfield…',10);
+  addStarfield();
+  setLoadStep('Building galaxy…',25);
+  buildGalaxy();
+  setLoadStep('Placing planets…',40);
+  buildSolarSystem();
+  setLoadStep('Cataloging moons…',55);
+  buildMoonsView();
+  setLoadStep('Mapping universe…',70);
+  buildUniverseView();
+  setLoadStep('Sculpting black holes…',85);
+  buildBlackholeScene();
+  setLoadStep('Painting nebulae…',95);
+  buildNebulaScene();
+  setLoadStep('Launching…',100);
+
+  setView('galaxy');
+  animate();
+
+  window.addEventListener('resize',onResize);
+  window.addEventListener('mousemove',onMouseMove);
+  window.addEventListener('click',onMouseClick);
+  window.addEventListener('wheel',onWheel,{passive:false});
+  window.addEventListener('keydown',onKeydown);
+
+  const c = document.getElementById('c');
+  c.addEventListener('mousedown',onDragStart);
+  window.addEventListener('mousemove',onDragMove);
+  window.addEventListener('mouseup',onDragEnd);
+  c.addEventListener('touchstart',onTouchStart,{passive:false});
+  c.addEventListener('touchmove',onTouchMove,{passive:false});
+  c.addEventListener('touchend',onTouchEnd);
+
+  buildObjectList();
+
+  setTimeout(()=>{
+    document.getElementById('loading').classList.add('hidden');
+    setTimeout(()=>showInfo(currentView),300);
+  },2400);
+}
+
+function setLoadStep(text,pct) {
+  document.getElementById('load-step').textContent=text;
+  document.getElementById('load-bar').style.width=pct+'%';
+}
+
+// ── STARFIELD ──
+function addStarfield() {
+  const geo = new THREE.BufferGeometry();
+  const count = 15000;
+  const pos = new Float32Array(count*3);
+  const col = new Float32Array(count*3);
+
+  for(let i=0;i<count;i++) {
+    const r = 450+Math.random()*1400;
+    const theta = Math.random()*Math.PI*2;
+    const phi = Math.acos(2*Math.random()-1);
+    pos[i*3]   = r*Math.sin(phi)*Math.cos(theta);
+    pos[i*3+1] = r*Math.sin(phi)*Math.sin(theta);
+    pos[i*3+2] = r*Math.cos(phi);
+
+    const c = Math.random();
+    if(c>0.85)      {col[i*3]=0.7;col[i*3+1]=0.85;col[i*3+2]=1.0;}
+    else if(c>0.6)  {col[i*3]=1.0;col[i*3+1]=1.0;col[i*3+2]=0.85;}
+    else if(c>0.35) {col[i*3]=1.0;col[i*3+1]=0.75;col[i*3+2]=0.4;}
+    else            {col[i*3]=1.0;col[i*3+1]=0.55;col[i*3+2]=0.3;}
+  }
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  scene.add(new THREE.Points(geo,new THREE.PointsMaterial({size:0.4,vertexColors:true,sizeAttenuation:true})));
+}
+
+// ── GALAXY ──
+function buildGalaxy() {
+  const grp = new THREE.Group();grp.name='galaxy';objects.galaxy=grp;
+  const count = 25000;
+  const geo = new THREE.BufferGeometry();
+  const pos = new Float32Array(count*3);
+  const col = new Float32Array(count*3);
+
+  for(let i=0;i<count;i++) {
+    const arm = Math.floor(Math.random()*4);
+    const r = 0.5+Math.pow(Math.random(),0.55)*30;
+    const armAngle = (arm/4)*Math.PI*2;
+    const spiral = r*0.42;
+    const scatter = (Math.random()-0.5)*(r*0.14+0.4);
+    const angle = armAngle+spiral+scatter;
+    const y = (Math.random()-0.5)*Math.max(0.08,1.6-r*0.052);
+
+    pos[i*3]   = Math.cos(angle)*r+(Math.random()-0.5)*0.6;
+    pos[i*3+1] = y;
+    pos[i*3+2] = Math.sin(angle)*r+(Math.random()-0.5)*0.6;
+
+    const tf = r/30;
+    if(tf<0.12)     {col[i*3]=1;col[i*3+1]=0.95;col[i*3+2]=0.65;}
+    else if(tf<0.4) {col[i*3]=0.75;col[i*3+1]=0.88;col[i*3+2]=1.0;}
+    else if(tf<0.7) {col[i*3]=0.9;col[i*3+1]=0.75;col[i*3+2]=0.55;}
+    else            {col[i*3]=0.6;col[i*3+1]=0.65;col[i*3+2]=0.9;}
+  }
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  grp.add(new THREE.Points(geo,new THREE.PointsMaterial({size:0.16,vertexColors:true})));
+
+  [[2.2,0xFFEE88,0.55],[3.5,0xFFCC44,0.18],[5.0,0xFF8800,0.07]].forEach(([r,c,o])=>{
+    const m = new THREE.Mesh(new THREE.SphereGeometry(r,16,16),
+      new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:o}));
+    grp.add(m);
+  });
+
+  const bh = new THREE.Mesh(new THREE.SphereGeometry(0.3,12,12),
+    new THREE.MeshBasicMaterial({color:0x000000}));
+  bh.userData = {name:'Sagittarius A*',type:'blackhole'};
+  clickables.push(bh);grp.add(bh);
+
+  scene.add(grp);
+}
+
+// ── SOLAR SYSTEM ──
+function buildSolarSystem() {
+  const grp = new THREE.Group();grp.name='solar';objects.solar=grp;grp.visible=false;
+
+  [[1.5,0xFFDD44,1],[2.0,0xFFAA00,0.14],[2.8,0xFF6600,0.06]].forEach(([r,c,o],i)=>{
+    const sun = new THREE.Mesh(new THREE.SphereGeometry(r,32,32),
+      new THREE.MeshBasicMaterial({color:c,transparent:o<1,opacity:o}));
+    if(i===0) {sun.userData={name:'The Sun',type:'star'};clickables.push(sun);}
+    grp.add(sun);
+  });
+  grp.add(new THREE.PointLight(0xFFEE88,3,200));
+
+  PLANETS.forEach(p=>{
+    orbitAngles[p.name]=Math.random()*Math.PI*2;
+    grp.add(new THREE.Mesh(
+      new THREE.RingGeometry(p.dist-0.03,p.dist+0.03,120),
+      new THREE.MeshBasicMaterial({color:0x334455,side:THREE.DoubleSide,transparent:true,opacity:0.35})
+    ));
+
+    const planet = new THREE.Mesh(
+      new THREE.SphereGeometry(p.size,28,28),
+      new THREE.MeshStandardMaterial({color:p.color,metalness:0.15,roughness:0.75})
+    );
+    planet.position.set(p.dist,0,0);
+    planet.userData={name:p.name,type:'planet',dist:p.dist,speed:p.speed};
+    clickables.push(planet);grp.add(planet);
+
+    if(p.name==='Saturn') {
+      [[p.size*1.5,p.size*2.2,0xCCBB88,0.55],[p.size*2.2,p.size*2.6,0xBBAA77,0.35]].forEach(([ri,ro,c,o])=>{
+        const ring=new THREE.Mesh(new THREE.RingGeometry(ri,ro,64),
+          new THREE.MeshBasicMaterial({color:c,side:THREE.DoubleSide,transparent:true,opacity:o}));
+        ring.rotation.x=Math.PI*0.38;
+        planet.add(ring);
+      });
+    }
+    if(p.name==='Uranus') {
+      const ring=new THREE.Mesh(new THREE.RingGeometry(p.size*1.4,p.size*1.8,40),
+        new THREE.MeshBasicMaterial({color:0x66BBCC,side:THREE.DoubleSide,transparent:true,opacity:0.25}));
+      ring.rotation.z=Math.PI*0.48;
+      planet.add(ring);
+    }
+    if(p.name==='Earth') {
+      const moon=new THREE.Mesh(new THREE.SphereGeometry(0.08,12,12),
+        new THREE.MeshStandardMaterial({color:0xAAAAAA,roughness:0.9}));
+      moon.position.set(0.55,0,0);
+      moon.userData={name:'The Moon',type:'moon'};
+      planet.add(moon);
+    }
+  });
+
+  // Asteroid belt
+  const abGeo=new THREE.BufferGeometry();
+  const abCount=1200;
+  const abPos=new Float32Array(abCount*3);
+  const abCol=new Float32Array(abCount*3);
+  for(let i=0;i<abCount;i++) {
+    const a=Math.random()*Math.PI*2;
+    const r=10.3+Math.random()*1.8;
+    abPos[i*3]=Math.cos(a)*r;
+    abPos[i*3+1]=(Math.random()-0.5)*0.5;
+    abPos[i*3+2]=Math.sin(a)*r;
+    const shade=0.4+Math.random()*0.4;
+    abCol[i*3]=shade;abCol[i*3+1]=shade*0.95;abCol[i*3+2]=shade*0.85;
+  }
+  abGeo.setAttribute('position',new THREE.BufferAttribute(abPos,3));
+  abGeo.setAttribute('color',new THREE.BufferAttribute(abCol,3));
+  grp.add(new THREE.Points(abGeo,new THREE.PointsMaterial({size:0.07,vertexColors:true})));
+
+  // Kuiper Belt
+  const kbGeo=new THREE.BufferGeometry();
+  const kbCount=800;
+  const kbPos=new Float32Array(kbCount*3);
+  const kbCol=new Float32Array(kbCount*3);
+  for(let i=0;i<kbCount;i++) {
+    const a=Math.random()*Math.PI*2;
+    const r=30+Math.random()*15;
+    kbPos[i*3]=Math.cos(a)*r;
+    kbPos[i*3+1]=(Math.random()-0.5)*2;
+    kbPos[i*3+2]=Math.sin(a)*r;
+    kbCol[i*3]=0.55;kbCol[i*3+1]=0.5;kbCol[i*3+2]=0.6;
+  }
+  kbGeo.setAttribute('position',new THREE.BufferAttribute(kbPos,3));
+  kbGeo.setAttribute('color',new THREE.BufferAttribute(kbCol,3));
+  grp.add(new THREE.Points(kbGeo,new THREE.PointsMaterial({size:0.05,vertexColors:true,transparent:true,opacity:0.6})));
+
+  scene.add(grp);
+}
+
+// ── MOONS VIEW ──
+function buildMoonsView() {
+  const grp = new THREE.Group();grp.name='moons';objects.moons=grp;grp.visible=false;
+
+  const planetPositions = {
+    'Earth':{x:0,y:0,z:0},
+    'Mars':{x:15,y:0,z:0},
+    'Jupiter':{x:30,y:0,z:0},
+    'Saturn':{x:45,y:0,z:0},
+    'Neptune':{x:60,y:0,z:0}
+  };
+
+  MOONS_DATA.forEach((moon,idx)=>{
+    const ppos = planetPositions[moon.parent] || {x:75,y:0,z:0};
+    const offset = (idx%3)*0.1+0.3;
+    const m = new THREE.Mesh(new THREE.SphereGeometry(moon.size,12,12),
+      new THREE.MeshStandardMaterial({color:moon.color,roughness:0.8}));
+    m.position.set(ppos.x+offset,ppos.y,ppos.z);
+    m.userData={name:moon.name,type:'moon',facts:moon.facts};
+    clickables.push(m);grp.add(m);
+  });
+
+  scene.add(grp);
+}
+
+// ── UNIVERSE ──
+function buildUniverseView() {
+  const grp = new THREE.Group();grp.name='universe';objects.universe=grp;grp.visible=false;
+  const count = 5000;
+  const geo = new THREE.BufferGeometry();
+  const pos = new Float32Array(count*3);
+  const col = new Float32Array(count*3);
+
+  for(let i=0;i<count;i++) {
+    const cluster=Math.floor(Math.random()*24);
+    const cx=(cluster%6-2.5)*38+(Math.random()-0.5)*4;
+    const cy=(Math.floor(cluster/6)%4-1.5)*28+(Math.random()-0.5)*4;
+    const cz=(Math.floor(cluster/12)-0.5)*65;
+    const r=Math.random()*14;
+    const a=Math.random()*Math.PI*2,b=Math.random()*Math.PI;
+    pos[i*3]=cx+r*Math.sin(b)*Math.cos(a);
+    pos[i*3+1]=cy+r*Math.sin(b)*Math.sin(a)*0.5;
+    pos[i*3+2]=cz+r*Math.cos(b);
+    const c=Math.random();
+    col[i*3]=c>0.5?0.5:0.9;col[i*3+1]=c>0.5?0.65:0.88;col[i*3+2]=1.0;
+  }
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  grp.add(new THREE.Points(geo,new THREE.PointsMaterial({size:0.6,vertexColors:true})));
+  scene.add(grp);
+}
+
+// ── BLACK HOLE ──
+function buildBlackholeScene() {
+  const grp = new THREE.Group();grp.name='blackhole';objects.blackhole=grp;grp.visible=false;
+
+  grp.add(new THREE.Mesh(new THREE.SphereGeometry(2,32,32),new THREE.MeshBasicMaterial({color:0x000000})));
+
+  const diskData = [
+    [2.3,3.8,0xFF8800,0.85],[3.5,5.5,0xFF5500,0.65],
+    [5.0,8.0,0xFF3300,0.45],[7.5,11.0,0x882200,0.25]
+  ];
+  diskData.forEach(([ri,ro,c,o])=>{
+    const disk=new THREE.Mesh(new THREE.RingGeometry(ri,ro,80,4),
+      new THREE.MeshBasicMaterial({color:c,side:THREE.DoubleSide,transparent:true,opacity:o}));
+    disk.rotation.x=Math.PI*0.22;
+    disk.userData={diskLayer:true};
+    grp.add(disk);
+  });
+
+  const inner=new THREE.Mesh(new THREE.RingGeometry(2.1,3.0,60),
+    new THREE.MeshBasicMaterial({color:0xFFFFAA,side:THREE.DoubleSide,transparent:true,opacity:0.6}));
+  inner.rotation.x=Math.PI*0.22;
+  grp.add(inner);
+
+  grp.add(new THREE.Mesh(new THREE.TorusGeometry(3.1,0.04,8,100),
+    new THREE.MeshBasicMaterial({color:0xFFFFFF})));
+
+  const halo=new THREE.Mesh(new THREE.RingGeometry(3.8,4.2,80),
+    new THREE.MeshBasicMaterial({color:0xFFAA66,side:THREE.DoubleSide,transparent:true,opacity:0.15}));
+  halo.rotation.x=Math.PI*0.15;
+  grp.add(halo);
+
+  [[12,0],[-12,Math.PI]].forEach(([y,r])=>{
+    const jet=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.5,20,8),
+      new THREE.MeshBasicMaterial({color:0x4488FF,transparent:true,opacity:0.45}));
+    jet.position.y=y;jet.rotation.z=r;
+    grp.add(jet);
+  });
+
+  scene.add(grp);
+}
+
+// ── NEBULA ──
+function buildNebulaScene() {
+  const grp = new THREE.Group();grp.name='nebula';objects.nebula=grp;grp.visible=false;
+
+  const layers = [
+    {color1:[0.85,0.2,0.95],color2:[0.4,0.08,0.85],count:3500,spread:28,ySpread:17,size:0.4},
+    {color1:[0.2,0.75,0.95],color2:[0.08,0.4,0.85],count:2500,spread:22,ySpread:13,size:0.35},
+    {color1:[0.95,0.45,0.15],color2:[0.75,0.2,0.08],count:1800,spread:16,ySpread:9,size:0.3},
+    {color1:[0.2,0.9,0.55],color2:[0.1,0.55,0.3],count:1000,spread:12,ySpread:6,size:0.25}
+  ];
+
+  layers.forEach(l=>{
+    const geo = new THREE.BufferGeometry();
+    const pos = new Float32Array(l.count*3);
+    const col = new Float32Array(l.count*3);
+    for(let i=0;i<l.count;i++) {
+      pos[i*3]   = (Math.random()-0.5)*l.spread;
+      pos[i*3+1] = (Math.random()-0.5)*l.ySpread;
+      pos[i*3+2] = (Math.random()-0.5)*l.spread;
+      const tt = Math.random();
+      col[i*3]   = l.color1[0]*tt+l.color2[0]*(1-tt);
+      col[i*3+1] = l.color1[1]*tt+l.color2[1]*(1-tt);
+      col[i*3+2] = l.color1[2]*tt+l.color2[2]*(1-tt);
+    }
+    geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+    geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+    grp.add(new THREE.Points(geo,new THREE.PointsMaterial({size:l.size,vertexColors:true,transparent:true,opacity:0.8})));
+  });
+
+  for(let i=0;i<12;i++) {
+    const star=new THREE.Mesh(new THREE.SphereGeometry(0.25+Math.random()*0.15,10,10),
+      new THREE.MeshBasicMaterial({color:0xCCEEFF}));
+    star.position.set((Math.random()-0.5)*14,(Math.random()-0.5)*7,(Math.random()-0.5)*14);
+    grp.add(star);
+  }
+
+  scene.add(grp);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// VIEW MANAGEMENT
+// ═══════════════════════════════════════════════════════════════
+const viewConfig = {
+  galaxy:    {pos:[0,25,55],look:[0,0,0],obj:'galaxy',label:'MILKY WAY GALAXY'},
+  solar:     {pos:[0,30,50],look:[0,0,0],obj:'solar',label:'SOLAR SYSTEM'},
+  moons:     {pos:[0,15,90],look:[0,0,0],obj:'moons',label:'MOON SYSTEM'},
+  universe:  {pos:[0,60,120],look:[0,0,0],obj:'universe',label:'OBSERVABLE UNIVERSE'},
+  blackhole: {pos:[0,12,30],look:[0,0,0],obj:'blackhole',label:'BLACK HOLE'},
+  nebula:    {pos:[0,15,45],look:[0,0,0],obj:'nebula',label:'NEBULA CLOUD'}
+};
+
+function setView(v) {
+  currentView=v;
+  const cfg=viewConfig[v];
+  Object.keys(objects).forEach(k=>{if(objects[k])objects[k].visible=false;});
+  if(objects[cfg.obj])objects[cfg.obj].visible=true;
+
+  gsmoothTo(camera.position,cfg.pos,70);
+
+  document.querySelectorAll('.nav-pill').forEach(b=>{
+    b.classList.toggle('active',b.dataset.view===v);
+  });
+  document.getElementById('hud-view').textContent=cfg.label;
+  document.getElementById('panel-icon').textContent=ICONS[v]||'✦';
+
+  const sl=document.getElementById('scale-mode');
+  sl.textContent=cfg.label;
+  sl.classList.add('show');
+  setTimeout(()=>sl.classList.remove('show'),2200);
+
+  showInfo(v);
+  buildObjectList();
+}
+
+function gsmoothTo(pos,target,steps) {
+  const start={x:pos.x,y:pos.y,z:pos.z};
+  const end={x:target[0],y:target[1],z:target[2]};
+  let step=0;
+  function tick() {
+    step++;
+    const tt=step/steps;
+    const ease=tt<0.5?2*tt*tt:-1+(4-2*tt)*tt;
+    pos.x=start.x+(end.x-start.x)*ease;
+    pos.y=start.y+(end.y-start.y)*ease;
+    pos.z=start.z+(end.z-start.z)*ease;
+    if(step<steps)requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ANIMATION
+// ═══════════════════════════════════════════════════════════════
+function animate() {
+  requestAnimationFrame(animate);
+  t+=0.005*simSpeed;
+  sessionTime+=0.016;
+
+  fpsFrames++;
+  const now=performance.now();
+  if(now-fpsLast>1000) {
+    document.getElementById('hud-fps').textContent=fpsFrames+' fps';
+    const mins = Math.floor(sessionTime/60);
+    const secs = Math.floor(sessionTime%60);
+    document.getElementById('hud-time').textContent = String(mins).padStart(2,'0')+':'+String(secs).padStart(2,'0');
+    fpsFrames=0;fpsLast=now;
+  }
+
+  if(autoRotate&&objects.galaxy?.visible)objects.galaxy.rotation.y+=0.0008*simSpeed;
+  if(objects.nebula?.visible)objects.nebula.rotation.y+=0.001*simSpeed;
+  if(autoRotate&&objects.universe?.visible)objects.universe.rotation.y+=0.0005*simSpeed;
+  if(objects.moons?.visible)objects.moons.rotation.y+=0.0003*simSpeed;
+
+  if(objects.blackhole?.visible) {
+    objects.blackhole.children.forEach((c,i)=>{
+      if(c.userData.diskLayer)c.rotation.z+=0.004*simSpeed*(i%2===0?1:-1);
+    });
+  }
+
+  if(objects.solar?.visible) {
+    objects.solar.children.forEach(child=>{
+      if(child.userData?.type==='planet') {
+        orbitAngles[child.userData.name]+=child.userData.speed*simSpeed;
+        const a=orbitAngles[child.userData.name];
+        const d=child.userData.dist;
+        child.position.set(Math.cos(a)*d,0,Math.sin(a)*d);
+        child.rotation.y+=0.012*simSpeed;
+        child.children.forEach(m=>{
+          if(m.userData?.type==='moon')m.rotation.y+=0.03*simSpeed;
+        });
+      }
+    });
+  }
+
+  if(autoRotate&&!isDragging) {
+    camera.position.x+=Math.sin(t*0.18)*0.015;
+    camera.position.y+=Math.sin(t*0.12)*0.01;
+  }
+
+  camera.lookAt(0,0,0);
+  renderer.render(scene,camera);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INFO PANEL
+// ═══════════════════════════════════════════════════════════════
+function showInfo(key,extra) {
+  const panel=document.getElementById('info-panel');
+  activeData=extra||DATA[key];
+  if(!activeData)return;
+  document.getElementById('panel-title').textContent=activeData.title;
+  document.getElementById('panel-subtitle').textContent=activeData.subtitle;
+  document.getElementById('panel-icon').textContent=activeData.icon||ICONS[key]||'✦';
+  renderTab(currentTab);
+  panel.classList.add('open');
+}
+
+function switchTab(tab) {
+  currentTab=tab;
+  document.querySelectorAll('.p-tab').forEach(t=>t.classList.toggle('active',t.textContent.toLowerCase()===tab));
+  if(activeData)renderTab(tab);
+}
+
+function renderTab(tab) {
+  const d=activeData;
+  let html='';
+
+  if(tab==='stats') {
+    if(d.stats) {
+      html+='<div class="stat-grid">';
+      d.stats.forEach(s=>{
+        html+=`<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-value">${s.value}</div></div>`;
+      });
+      html+='</div>';
+    }
+    if(d.overview)html+=`<div class="info-section"><p>${d.overview}</p></div>`;
+  } else if(tab==='facts') {
+    if(d.funFacts) {
+      d.funFacts.forEach((f,i)=>{
+        html+=`<div class="fun-fact"><div class="ff-num">0${i+1}</div><p>${f}</p></div>`;
+      });
+    }
+  } else {
+    if(d.sections) {
+      d.sections.forEach(s=>{
+        html+=`<div class="info-section"><h3>${s.title}</h3><ul class="fact-list">`;
+        s.facts.forEach(f=>{html+=`<li>${f}</li>`;});
+        html+='</ul></div>';
+      });
+    }
+  }
+
+  document.getElementById('panel-body').innerHTML=html||'<div style="color:var(--muted);font-size:12px;padding:10px">No data.</div>';
+}
+
+function closePanel() {document.getElementById('info-panel').classList.remove('open');}
+function togglePanel() {
+  const p=document.getElementById('info-panel');
+  if(p.classList.contains('open'))closePanel();
+  else showInfo(currentView);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// OBJECT LIST
+// ═══════════════════════════════════════════════════════════════
+function buildObjectList() {
+  const list=document.getElementById('object-list');
+  list.innerHTML='';
+
+  if(currentView==='moons') {
+    MOONS_DATA.forEach(m=>{
+      const btn=document.createElement('button');
+      btn.className='obj-btn';
+      btn.innerHTML=`<div class="obj-dot" style="background:#AAAAAA"></div><span class="obj-name">${m.emoji} ${m.name}</span>`;
+      btn.onclick=()=>{
+        showInfo(null,{title:m.name.toUpperCase(),subtitle:`Moon of ${m.parent}`,icon:m.emoji,funFacts:m.facts});
+        document.getElementById('hud-obj').textContent=m.name;
+      };
+      list.appendChild(btn);
+    });
+  } else if(currentView==='solar') {
+    PLANETS.forEach(p=>{
+      const btn=document.createElement('button');
+      btn.className='obj-btn';
+      btn.innerHTML=`<div class="obj-dot" style="background:${p.dot}"></div><span class="obj-name">${p.emoji} ${p.name}</span>`;
+      btn.onclick=()=>{
+        showInfo(null,{title:p.name.toUpperCase(),subtitle:'Planet',icon:p.emoji});
+        document.getElementById('hud-obj').textContent=p.name;
+      };
+      list.appendChild(btn);
+    });
+    DWARF_PLANETS.forEach(d=>{
+      const btn=document.createElement('button');
+      btn.className='obj-btn';
+      btn.innerHTML=`<div class="obj-dot" style="background:${d.color};opacity:0.6"></div><span class="obj-name" style="opacity:0.7">${d.emoji} ${d.name}</span>`;
+      btn.onclick=()=>{
+        showInfo(null,{title:d.name.toUpperCase(),subtitle:'Dwarf Planet',icon:d.emoji,funFacts:d.facts});
+      };
+      list.appendChild(btn);
+    });
+  } else {
+    [{key:'galaxy',label:'Milky Way',dot:'#FFD700',emoji:'🌌'},
+     {key:'universe',label:'Universe',dot:'#4488FF',emoji:'🔭'},
+     {key:'blackhole',label:'Black Holes',dot:'#FF2D78',emoji:'⚫'},
+     {key:'nebula',label:'Nebulae',dot:'#AA44FF',emoji:'🌈'}].forEach(v=>{
+      const btn=document.createElement('button');
+      btn.className='obj-btn'+(currentView===v.key?' selected':'');
+      btn.innerHTML=`<div class="obj-dot" style="background:${v.dot}"></div><span class="obj-name">${v.emoji} ${v.label}</span>`;
+      btn.onclick=()=>setView(v.key);
+      list.appendChild(btn);
+    });
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MOUSE & INTERACTION
+// ═══════════════════════════════════════════════════════════════
+const tooltip=document.getElementById('tooltip');
+let dragMoved=false;
+
+function onMouseMove(e) {
+  mouse.x=(e.clientX/window.innerWidth)*2-1;
+  mouse.y=-(e.clientY/window.innerHeight)*2+1;
+  raycaster.setFromCamera(mouse,camera);
+  const hits=raycaster.intersectObjects(clickables);
+  if(hits.length>0&&hits[0].object.userData.name) {
+    tooltip.textContent=hits[0].object.userData.name;
+    tooltip.style.left=(e.clientX+14)+'px';
+    tooltip.style.top=(e.clientY-8)+'px';
+    tooltip.style.opacity='1';
+    document.body.style.cursor='pointer';
+  } else {
+    tooltip.style.opacity='0';
+    document.body.style.cursor=isDragging?'grabbing':'default';
+  }
+  if(isDragging)onDragMove(e);
+}
+
+function onMouseClick(e) {
+  if(dragMoved)return;
+  raycaster.setFromCamera(mouse,camera);
+  const hits=raycaster.intersectObjects(clickables);
+  if(hits.length>0) {
+    const obj=hits[0].object;
+    const name=obj.userData.name,type=obj.userData.type;
+    if(type==='moon'&&obj.userData.facts) {
+      showInfo(null,{title:name.toUpperCase(),subtitle:'Moon',icon:'🌙',funFacts:obj.userData.facts});
+    }
+    document.getElementById('hud-obj').textContent=name;
+  }
+}
+
+function onDragStart(e) {
+  if(e.target!==document.getElementById('c'))return;
+  isDragging=true;dragMoved=false;
+  dragStart={x:e.clientX,y:e.clientY};
+  document.body.style.cursor='grabbing';
+}
+
+function onDragMove(e) {
+  if(!isDragging)return;
+  const dx=e.clientX-dragStart.x,dy=e.clientY-dragStart.y;
+  if(Math.abs(dx)>2||Math.abs(dy)>2)dragMoved=true;
+  const r=camera.position.length();
+  const theta=Math.atan2(camera.position.x,camera.position.z);
+  const phi=Math.acos(Math.max(-1,Math.min(1,camera.position.y/r)));
+  const newTheta=theta-dx*0.008;
+  const newPhi=Math.max(0.1,Math.min(Math.PI-0.1,phi+dy*0.008));
+  camera.position.set(r*Math.sin(newPhi)*Math.sin(newTheta),r*Math.cos(newPhi),r*Math.sin(newPhi)*Math.cos(newTheta));
+  dragStart={x:e.clientX,y:e.clientY};
+}
+
+function onDragEnd() {isDragging=false;document.body.style.cursor='default';}
+
+function onTouchStart(e) {
+  e.preventDefault();
+  if(e.touches.length===1) {isDragging=true;dragMoved=false;dragStart={x:e.touches[0].clientX,y:e.touches[0].clientY};}
+}
+
+function onTouchMove(e) {
+  e.preventDefault();
+  if(e.touches.length===1&&isDragging)onDragMove({clientX:e.touches[0].clientX,clientY:e.touches[0].clientY});
+}
+
+function onTouchEnd(e) {isDragging=false;if(e.touches.length===0)setTimeout(()=>dragMoved=false,50);}
+
+// ═══════════════════════════════════════════════════════════════
+// CONTROLS
+// ═══════════════════════════════════════════════════════════════
+function onWheel(e) {e.preventDefault();camera.position.multiplyScalar(e.deltaY>0?1.07:0.935);updateZoomHUD();}
+function updateZoomHUD() {document.getElementById('hud-zoom').textContent=(60/camera.position.length()).toFixed(2)+'×';}
+function zoomIn() {camera.position.multiplyScalar(0.85);updateZoomHUD();}
+function zoomOut() {camera.position.multiplyScalar(1.18);updateZoomHUD();}
+function resetView() {gsmoothTo(camera.position,viewConfig[currentView].pos,45);}
+function toggleRotate() {
+  autoRotate=!autoRotate;
+  document.getElementById('rotate-btn').classList.toggle('active',autoRotate);
+  notify(autoRotate?'Auto-Rotate ON':'Auto-Rotate OFF');
+}
+function setSpeed(v) {simSpeed=parseFloat(v);}
+function onResize() {camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);}
+
+// ═══════════════════════════════════════════════════════════════
+// SEARCH
+// ═══════════════════════════════════════════════════════════════
+let searchOpen=false;
+function toggleSearch() {
+  searchOpen=!searchOpen;
+  document.getElementById('search-wrap').classList.toggle('open',searchOpen);
+  if(searchOpen)setTimeout(()=>document.getElementById('search-box').focus(),200);
+  else {document.getElementById('search-box').value='';document.getElementById('search-results').classList.remove('show');}
+}
+
+function doSearch(q) {
+  const res=document.getElementById('search-results');
+  if(!q.trim()) {res.classList.remove('show');return;}
+  const matches=SEARCH_INDEX.filter(i=>i.label.toLowerCase().includes(q.toLowerCase())||i.sub.toLowerCase().includes(q.toLowerCase())).slice(0,10);
+  res.innerHTML=matches.map(m=>`<div class="search-item" onclick="searchSelect('${m.view}','${m.planet||m.moon||m.dwarf||''}')"><div class="s-dot" style="background:${m.dot}"></div><div>${m.label}<br><span style="font-size:9px;color:var(--muted)">${m.sub}</span></div><span class="s-cat">${m.view}</span></div>`).join('');
+  res.classList.toggle('show',matches.length>0);
+}
+
+function searchSelect(view,extra) {
+  setView(view);
+  searchOpen=false;
+  document.getElementById('search-wrap').classList.remove('open');
+  document.getElementById('search-box').value='';
+  notify(`Navigating to ${extra||view}…`);
+}
+
+function searchKeydown(e) {if(e.key==='Escape')toggleSearch();}
+
+// ═══════════════════════════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════════════════════════════
+const viewKeys=['galaxy','solar','moons','universe','blackhole','nebula'];
+function onKeydown(e) {
+  if(document.getElementById('search-box')===document.activeElement&&e.key!=='Escape')return;
+  switch(e.key) {
+    case '1':case '2':case '3':case '4':case '5':case '6': setView(viewKeys[+e.key-1]);break;
+    case ' ': e.preventDefault();toggleRotate();break;
+    case '+':case '=': zoomIn();break;
+    case '-':case '_': zoomOut();break;
+    case 'r':case 'R': resetView();break;
+    case 'i':case 'I': togglePanel();break;
+    case 's':case 'S': toggleSearch();break;
+    case 'p':case 'P': takeScreenshot();break;
+    case 'd':case 'D': toggleDataModal();break;
+    case 'a':case 'A': toggleARMode();break;
+    case '?': toggleShortcuts();break;
+    case 'Escape':
+      closePanel();
+      if(searchOpen)toggleSearch();
+      if(document.getElementById('shortcuts-overlay').classList.contains('open'))toggleShortcuts();
+      if(document.getElementById('data-modal').classList.contains('open'))toggleDataModal();
+      if(arActive)toggleARMode();
+      break;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SCREENSHOT
+// ═══════════════════════════════════════════════════════════════
+function takeScreenshot() {
+  renderer.render(scene,camera);
+  const link=document.createElement('a');
+  link.download='cosmosvault-pro-'+currentView+'.png';
+  link.href=document.getElementById('c').toDataURL('image/png');
+  link.click();
+  document.getElementById('flash').classList.add('on');
+  setTimeout(()=>document.getElementById('flash').classList.remove('on'),120);
+  notify('📸 Screenshot saved!');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SHORTCUTS OVERLAY
+// ═══════════════════════════════════════════════════════════════
+function toggleShortcuts() {
+  document.getElementById('shortcuts-overlay').classList.toggle('open');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DATA SAVE/LOAD
+// ═══════════════════════════════════════════════════════════════
+function toggleDataModal() {
+  document.getElementById('data-modal').classList.toggle('open');
+}
+
+function saveSession() {
+  const session = {
+    view:currentView,
+    camPos:{x:camera.position.x,y:camera.position.y,z:camera.position.z},
+    zoom:60/camera.position.length(),
+    time:new Date().toISOString()
+  };
+  localStorage.setItem('cosmosvault-session',JSON.stringify(session));
+  notify('✓ Session saved to browser storage');
+}
+
+function loadSession() {
+  const saved = localStorage.getItem('cosmosvault-session');
+  if(!saved) {notify('✗ No saved session found');return;}
+  const session = JSON.parse(saved);
+  setView(session.view);
+  gsmoothTo(camera.position,[session.camPos.x,session.camPos.y,session.camPos.z],50);
+  notify(`✓ Session loaded from ${new Date(session.time).toLocaleDateString()}`);
+  toggleDataModal();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MULTIPLAYER (DEMO)
+// ═══════════════════════════════════════════════════════════════
+function toggleMultiplayer() {
+  multiplayerOnline=!multiplayerOnline;
+  const status=document.getElementById('multiplayer-status');
+  const btn=document.getElementById('mp-btn');
+  if(multiplayerOnline) {
+    status.classList.add('online');
+    btn.textContent='🟢 ONLINE';
+    btn.style.borderColor='var(--green)';
+    btn.style.color='var(--green)';
+    notify('🟢 Multiplayer connected!');
+  } else {
+    status.classList.remove('online');
+    btn.textContent='⚫ OFFLINE';
+    btn.style.borderColor='var(--muted)';
+    btn.style.color='var(--muted)';
+    notify('⚫ Multiplayer disconnected');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AR MODE (DEMO)
+// ═══════════════════════════════════════════════════════════════
+function toggleARMode() {
+  arActive=!arActive;
+  document.getElementById('ar-overlay').classList.toggle('active',arActive);
+  if(arActive) {
+    notify('📱 AR Mode activated');
+  } else {
+    notify('📱 AR Mode deactivated');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NOTIFICATION
+// ═══════════════════════════════════════════════════════════════
+let notifTimer;
+function notify(msg) {
+  const el=document.getElementById('notif');
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(notifTimer);
+  notifTimer=setTimeout(()=>el.classList.remove('show'),2500);
+}
+
+// Start!
+try {
+  init();
+  console.log('✓ CosmosVault Pro v2.0 initialized successfully');
+} catch(err) {
+  console.error('✗ Error:',err);
+  alert('Error loading CosmosVault:\n'+err.message);
+}
+</script>
+</body>
+</html>
