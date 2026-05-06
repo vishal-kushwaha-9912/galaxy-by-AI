@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CosmosVault Pro - Interactive 3D Universe Explorer">
+  <title>CosmosVault Pro - Universe Explorer</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:ital,wght@0,300;0,400;0,600;1,300&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       MAIN CANVAS & SCENE
+       ═══════════════════════════════════════════════════════════════ -->
+  <canvas id="c"></canvas>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       LOADING SCREEN
+       ═══════════════════════════════════════════════════════════════ -->
+  <div id="loading">
+    <div class="load-logo">COSMOS<span style="color:var(--magenta)">VAULT</span> PRO</div>
+    <div class="load-sub">Universe v2.0 — Enhanced Edition</div>
+    <div class="load-progress">
+      <div class="load-bar-wrap">
+        <div class="load-bar" id="load-bar"></div>
+      </div>
+      <div class="load-step" id="load-step">Initializing quantum processors…</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       FLASH EFFECT (Screenshot)
+       ═══════════════════════════════════════════════════════════════ -->
+  <div id="flash"></div>
+  <div id="notif"></div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       TOP BAR - NAVIGATION & CONTROLS
+       ═══════════════════════════════════════════════════════════════ -->
+  <div id="topbar">
+    <div id="logo" onclick="setView('galaxy')">COSMOS<span style="color:var(--magenta)">VAULT</span></div>
+    <div id="nav-pills">
+      <button class="nav-pill active" data-view="galaxy" onclick="setView('galaxy')">Galaxy</button>
+      <button class="nav-pill" data-view="solar" onclick="setView('solar')">Solar System</button>
+      <button class="nav-pill" data-view="moons" onclick="setView('moons')">Moons</button>
+      <button class="nav-pill" data-view="universe" onclick="setView('universe')">Universe</button>
+      <button class="nav-pill" data-view="blackhole" onclick="setView('blackhole')">Black Holes</button>
+      <button class="nav-pill" data-view="nebula" onclick="setView('nebula')">Nebulae</button>
+    </div>
+    <div id="top-right">
+      <div id="multiplayer-status" title="Live multiplayer session">MULTIPLAYER</div>
+      <button class="icon-btn" title="Search (S)" onclick="toggleSearch()">🔍</button>
+      <button class="icon-btn" title="Save/Load (D)" onclick="toggleDataModal()">💾</button>
+      <button class="icon-btn" title="AR Mode (A)" onclick="toggleARMode()">📱</button>
+      <button class="icon-btn" title="Keyboard shortcuts (?)" onclick="toggleShortcuts()">⌨</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SEARCH INTERFACE
+       ═══════════════════════════════════════════════════════════════ -->
+  <div id="search-wrap">
+    <div style="position:relative">
+      <span id="search-icon-inner">🔍</span>
+      <input id="search-box" type="text" placeholder="Search planets, stars, phenomena…" oninput="doSearch(this.value)" onkeydown="searchKeydown(event)">
+    </div>
+    <div id="search-results"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SCALE MODE LABEL
+       ═══════════════════════════════════════════════════════════════ -->
+  <div id="scale-mode"></div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       OBJECT LIST (Left Sidebar)
+       ═══════════════════════════════════════════════════════════════ -->
+  <div id="object-list"></div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       HEAD-UP DISPLAY (HUD)
+       ═══════════════════════════════════════════════════════════════ -->
+  <div id="hud">
+    <div>ZOOM <span class="hud-value" id="hud-zoom">1.0×</span></div>
+    <div>VIEW <span class="hud-value" id="hud-view">GALAXY</span></div>
+    <div>OBJ  <span class="hud-value" id="hud-obj">—</span></div>
+    <div>TIME <span class="hud-value" id="hud-time">00:00</span></div>
+    <div>FPS  <span class="hud-value" id="hud-fps">—</span></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       LEGEND (Bottom Left)
+       ═══════════════════════════════════════════════════════════════ -->
+  <div id="legend">
+    <div class="legend-row">
+      <div class="legend-dot" style="background:#FFD700;box-shadow:0 0 5px #FFD700"></div>
+      <span class="legend-text">Star</span>
+    </div>
+    <div class="legend-row">
+      <div class="legend-dot" style="background:#4488FF;box-shadow:0 0 5px #4488FF"></div>
+      <span class="legend-text">Planet</span>
+    </div>
+    <div class="legend-row">
+      <div class="legend-dot" style="background:#AAAAAA;box-shadow:0 0 5px #AAAAAA"></div>
+      <span class="legend-text">Moon</span>
+    </div>
+    <div class="legend-row">
+      <div class="legend-dot" style="background:#AA44FF;box-shadow:0 0 5px #AA44FF"></div>
+      <span class="legend-text">Nebula</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       INFO PANEL (Right Sidebar)
+       ═══════════════════════════════════════════════════════════════ -->
+  <div id="info-panel">
+    <div id="panel-header">
+      <div>
+        <div id="panel-icon">🌌</div>
+        <div id="panel-title">OBJECT</div>
+        <div id="panel-subtitle">Awaiting selection</div>
+      </div>
+      <button id="close-panel" onclick="closePanel()">✕</button>
+    </div>
+    <div id="panel-tabs">
+      <div class="p-tab active" onclick="switchTab('info')">Info</div>
+      <div class="p-tab" onclick="switchTab('stats')">Stats</div>
+      <div class="p-tab" onclick="switchTab('facts')">Facts</div>
+    </div>
+    <div id="panel-body"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       BOTTOM CONTROLS
+       ═══════════════════════════════════════════════════════════════ -->
+  <div id="controls">
+    <button class="ctrl-btn" title="Zoom In (+)" onclick="zoomIn()">＋</button>
+    <button class="ctrl-btn" title="Zoom Out (−)" onclick="zoomOut()">－</button>
+    <button class="ctrl-btn" title="Reset View (R)" onclick="resetView()">⊙</button>
+    <button class="ctrl-btn active" title="Auto Rotate (Space)" id="rotate-btn" onclick="toggleRotate()">↻</button>
+    <button class="ctrl-btn" title="Toggle Info (I)" onclick="togglePanel()">ℹ</button>
+    <button class="ctrl-btn" title="Screenshot (P)" onclick="takeScreenshot()">📷</button>
+    <div id="speed-wrap">
+      <span id="speed-label">SPEED</span>
+      <input id="speed-slider" type="range" min="0.1" max="5" step="0.1" value="1" oninput="setSpeed(this.value)">
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       TOOLTIP
+       ═══════════════════════════════════════════════════════════════ -->
+  <div id="tooltip"></div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       KEYBOARD SHORTCUTS OVERLAY
+       ═══════════════════════════════════════════════════════════════ -->
+  <div id="shortcuts-overlay" onclick="toggleShortcuts()">
+    <div class="shortcuts-box" onclick="event.stopPropagation()">
+      <h2>⌨ KEYBOARD SHORTCUTS</h2>
+      <div class="shortcuts-grid">
+        <div>
+          <div class="sc-row"><span class="sc-key">1-6</span><span class="sc-desc">Switch views</span></div>
+          <div class="sc-row"><span class="sc-key">SPACE</span><span class="sc-desc">Toggle rotation</span></div>
+          <div class="sc-row"><span class="sc-key">+/−</span><span class="sc-desc">Zoom</span></div>
+          <div class="sc-row"><span class="sc-key">R</span><span class="sc-desc">Reset view</span></div>
+        </div>
+        <div>
+          <div class="sc-row"><span class="sc-key">I</span><span class="sc-desc">Toggle info</span></div>
+          <div class="sc-row"><span class="sc-key">S</span><span class="sc-desc">Search</span></div>
+          <div class="sc-row"><span class="sc-key">P</span><span class="sc-desc">Screenshot</span></div>
+          <div class="sc-row"><span class="sc-key">D</span><span class="sc-desc">Save/Load</span></div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:16px;padding-top:16px;border-top:0.5px solid var(--border)">
+        <div style="font-size:10px;color:var(--muted);letter-spacing:1px">A • Toggle AR | ? • Show Help | ESC • Close All</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       DATA SAVE/LOAD MODAL
+       ═══════════════════════════════════════════════════════════════ -->
+  <div id="data-modal">
+    <div class="data-box" onclick="event.stopPropagation()">
+      <h2>💾 SESSION MANAGER</h2>
+      <div class="data-text">Save your current view, zoom, and position</div>
+      <div class="data-row">
+        <button class="data-btn" onclick="saveSession()">💾 Save Session</button>
+        <button class="data-btn" onclick="loadSession()">📂 Load Session</button>
+      </div>
+      <div class="data-text" style="margin-top:20px;border-top:0.5px solid var(--border);padding-top:15px">
+        <strong>Multiplayer Preview:</strong> Live session connects to server (currently: offline demo)
+      </div>
+      <div class="data-row">
+        <button class="data-btn" onclick="toggleMultiplayer()" id="mp-btn" style="border-color:var(--green);color:var(--green)">🟢 ONLINE</button>
+        <button class="data-btn" onclick="toggleDataModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       AR MODE OVERLAY
+       ═══════════════════════════════════════════════════════════════ -->
+  <div id="ar-overlay">
+    <div class="ar-info">
+      <div style="font-size:16px;margin-bottom:10px">📱 AR Mode Active</div>
+      <div>Point your device at the sky to see planets</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:10px">Press ESC to exit</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       NASA & ISS INTEGRATION CONTAINERS
+       (These will be populated by API integration)
+       ═══════════════════════════════════════════════════════════════ -->
+  <div id="nasa" style="display:none;"></div>
+  <div id="iss" style="display:none;"></div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       EXTERNAL LIBRARIES
+       ═══════════════════════════════════════════════════════════════ -->
+
+  <!-- Three.js Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       APPLICATION SCRIPTS (Load in correct order)
+       ═══════════════════════════════════════════════════════════════ -->
+
+  <!-- Configuration & State -->
+  <script src="js/config.js"></script>
+
+  <!-- Astronomical Data -->
+  <script src="js/data.js"></script>
+
+  <!-- Three.js Scene Building -->
+  <script src="js/scene.js"></script>
+
+  <!-- Views & Animation -->
+  <script src="js/views.js"></script>
+
+  <!-- User Interface -->
+  <script src="js/ui.js"></script>
+
+  <!-- Interactions (Mouse, Keyboard, Camera) -->
+  <script src="js/interaction.js"></script>
+
+  <!-- API Integration (NASA, AI, etc.) -->
+  <script src="js/api-integration.js"></script>
+
+  <!-- Main Initialization -->
+  <script src="js/main.js"></script>
+
+</body>
+</html>

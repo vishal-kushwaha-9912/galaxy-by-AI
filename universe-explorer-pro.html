@@ -24,6 +24,13 @@
     --panel-w: 330px;
     --primary-grad: linear-gradient(135deg, #00d4ff 0%, #00aaff 100%);
   }
+.card {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
 
   * { margin:0; padding:0; box-sizing:border-box; }
   html, body {
@@ -373,7 +380,23 @@
 </style>
 </head>
 <body>
+<!-- AI Space Assistant -->
+ 
+<input id="question" placeholder="Ask about space...">
+<button onclick="ask()">Ask</button>
+<p id="answer"></p>
 
+<script>
+function ask() {
+  const q = document.getElementById("question").value;
+
+  if (q.includes("planet")) {
+    document.getElementById("answer").innerText = "Planets orbit stars like Earth orbits the Sun.";
+  } else {
+    document.getElementById("answer").innerText = "Interesting question about space!";
+  }
+}
+</script>
 <!-- Flash for screenshot -->
 <div id="flash"></div>
 <div id="notif"></div>
@@ -389,6 +412,43 @@
 </div>
 
 <!-- Canvas -->
+ <canvas id="stars"></canvas>
+ <script>
+const canvas = document.getElementById("stars");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let stars = [];
+
+for (let i = 0; i < 200; i++) {
+  stars.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    radius: Math.random() * 1.5,
+    speed: Math.random() * 0.5
+  });
+}
+
+function animate() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "white";
+  stars.forEach(star => {
+    ctx.beginPath();
+    ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    star.y += star.speed;
+    if (star.y > canvas.height) star.y = 0;
+  });
+
+  requestAnimationFrame(animate);
+}
+
+animate();
+</script>
 <canvas id="c"></canvas>
 
 <!-- AR Overlay -->
@@ -401,6 +461,33 @@
 </div>
 
 <!-- Topbar -->
+ <div id="nasa"></div>
+ <script>
+fetch("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY")
+  .then(res => res.json())
+  .then(data => {
+    document.getElementById("nasa").innerHTML = `
+      <h2>${data.title}</h2>
+      <img src="${data.url}" style="width:100%; border-radius:10px;">
+      <p>${data.explanation.substring(0, 150)}...</p>
+    `;
+  });
+</script>
+<div id="iss"></div>
+
+<script>
+setInterval(() => {
+  fetch("https://api.wheretheiss.at/v1/satellites/25544")
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("iss").innerHTML = `
+        <h3>🚀 ISS Location</h3>
+        <p>Lat: ${data.latitude.toFixed(2)}</p>
+        <p>Lon: ${data.longitude.toFixed(2)}</p>
+      `;
+    });
+}, 3000);
+</script>
 <div id="topbar">
   <div id="logo" onclick="setView('galaxy')">COSMOS<span style="color:var(--magenta)">VAULT</span></div>
   <div id="nav-pills">
