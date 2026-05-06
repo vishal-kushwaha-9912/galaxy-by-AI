@@ -3,7 +3,7 @@
 > 🚀 Interactive 3D Universe Explorer built with Three.js
 > 🌍 Explore galaxies, planets, moons, black holes & the observable universe in real-time
 
-🔗 **Live Demo:** https://your-username.github.io/galaxys/
+🔗 **Live Demo:** https://your-vishal-kushawaha-9912.github.io/galaxys/
 ⭐ **Star this repo if you like it!**
 
 ---
